@@ -23,9 +23,16 @@ async def webhook(request: Request):
             message = data.get("data", {})
             if not message.get("isFromMe"):
                 text = message.get("text")
-                chat_guid = message.get("chats", [{}])[0].get("guid")
-                print(f"Received Message: {text}")
-                send_message(chat_guid, str(data))
+                attachment = message.get("attachments")
+                if attachment:
+                    att_guid = attachment.get("guid")
+                    att_type = attachment.get("mimeType")
+                    chat_guid = message.get("chats", [{}])[0].get("guid")
+                    print(f"Received Attachment Type: {att_type}")
+                elif text:
+                    chat_guid = message.get("chats", [{}])[0].get("guid")
+                    print(f"Received Message: {text}")
+                    send_message(chat_guid, str(data))
         return {"status": "ok"} 
     except Exception as e:
         print(f"Webhook error: {e}")
