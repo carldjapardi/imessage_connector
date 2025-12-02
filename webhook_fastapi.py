@@ -25,9 +25,7 @@ def send_message(chat_guid, message_text):
         "method": "apple-script",
         }
 
-    params = {
-        "password": BLUEBUBBLES_PASSWORD
-    }
+    params = {"password": BLUEBUBBLES_PASSWORD}
 
     try:
         response = requests.post(url, json=payload, params=params)

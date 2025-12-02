@@ -3,6 +3,7 @@ import uuid
 import requests
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
+from webhook_fastapi import send_message
 
 load_dotenv()
 
@@ -24,10 +25,7 @@ async def webhook(request: Request):
                 text = message.get("text")
                 chat_guid = message.get("chats", [{}])[0].get("guid")
                 print(f"Received Message: {text}")
-
-                if text:
-                    gpt_response = generate_response(text)
-                    send_message(chat_guid, gpt_response)
+                send_message(chat_guid, str(data))
         return {"status": "ok"} 
     except Exception as e:
         print(f"Webhook error: {e}")
@@ -36,4 +34,4 @@ async def webhook(request: Request):
 if __name__ == "__main__":
     import uvicorn
     print(f"Starting FastAPI bot on IPv6 port {MY_PORT}...")
-    uvicorn.run("webhook_fastapi:app", host="::", port=MY_PORT, reload=True)
+    uvicorn.run("bb_json_dump:app", host="::", port=MY_PORT, reload=True)
