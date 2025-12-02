@@ -10,7 +10,9 @@ load_dotenv()
 BLUEBUBBLES_URL = "http://localhost:1234" 
 BLUEBUBBLES_PASSWORD = os.getenv('SERVER_PASSWORD')
 
-MY_PORT = 8000 
+print(BLUEBUBBLES_PASSWORD)
+
+MY_PORT = 8000
 
 def send_message(chat_guid, message_text):
     """Sends a message back to BlueBubbles to be delivered via iMessage"""
@@ -44,6 +46,7 @@ class WebhookHandler(BaseHTTPRequestHandler):
         
         try:
             data = json.loads(post_data)
+            print("Received data:", data)
             
             # Check if this is a new message event
             if data.get('type') == 'new-message':
@@ -72,7 +75,7 @@ class WebhookHandler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     print(f"Starting bot on port {MY_PORT}...")
-    server = HTTPServer(('localhost', MY_PORT), WebhookHandler)
+    server = HTTPServer(('127.0.0.1', MY_PORT), WebhookHandler)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

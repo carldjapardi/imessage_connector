@@ -7,7 +7,7 @@ from time import sleep
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 # Your BlueBubbles local address + port
-server_addr = 'http://localhost:1234'
+server_addr = 'http://192.111.137.120:1234'
 server_password = os.getenv('SERVER_PASSWORD')
 
 # Create a class to handle a POST request on port 8000
