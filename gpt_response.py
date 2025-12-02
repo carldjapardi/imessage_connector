@@ -23,5 +23,5 @@ def gpt_stt(audio_bytes):
         file=audio_file,
         response_format = "text"
     )
-    print(transcript.text)
-    return transcript.text
+    print(transcript)
+    return transcript
