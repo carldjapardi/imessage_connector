@@ -58,5 +58,5 @@ async def webhook():
 
 if __name__ == "__main__":
     import uvicorn
-    print(f"Starting FastAPI bot on IPv6 dual-stack port {MY_PORT}...")
+    print(f"Starting FastAPI bot on IPv6 port {MY_PORT}...")
     uvicorn.run("webhook_fastapi:app", host="::", port=MY_PORT, reload=True)
