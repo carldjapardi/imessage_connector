@@ -18,15 +18,15 @@ app = FastAPI()
 async def webhook(request: Request):
     try:
         data = await request.json()
-        print(data)
         if data.get("type") == "new-message":
             message = data.get("data", {})
             if not message.get("isFromMe"):
                 text = message.get("text")
                 attachment = message.get("attachments")
                 if attachment:
-                    att_guid = attachment.get("guid")
-                    att_type = attachment.get("mimeType")
+                    print(attachment)
+                    att_guid = attachment[0].get("guid")
+                    att_type = attachment[0].get("mimeType")
                     send = f"{att_guid} {att_type}"
                     chat_guid = message.get("chats", [{}])[0].get("guid")
                     print(f"Received Attachment Type: {att_type}")
