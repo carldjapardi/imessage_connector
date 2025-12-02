@@ -3,7 +3,7 @@ import uuid
 import requests
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
-from gpt_response import generate_response
+from gpt_response import generate_response, gpt_stt
 
 load_dotenv()
 
@@ -57,13 +57,23 @@ async def webhook(request: Request):
         if data.get("type") == "new-message":
             message = data.get("data", {})
             if not message.get("isFromMe"):
-                text = message.get("text")
+                text = message.get("text", [])
+                attachment = message.get("attachments", [])
                 chat_guid = message.get("chats", [{}])[0].get("guid")
-                print(f"Received Message: {text}")
-
                 if text:
+                    print(f"Received Message: {text}")
                     gpt_response = generate_response(text)
                     send_message(chat_guid, gpt_response)
+                if attachment:
+                    att_type = attachment[0].get("mimeType")
+                    att_guid = attachment[0].get("guid")
+                    if not att_type.startswith("audio/"): return
+                    audio_bytes = download_audio(att_guid)
+                    print(f"Received Attachment: {att_type}")
+                    transcribe = gpt_stt(audio_bytes)
+                    gpt_response = generate_response(transcribe)
+                    send_response = f"Transcribed audio: {transcribe}, Response: {gpt_response}"
+                    send_message(chat_guid, send_response)
         return {"status": "ok"} 
     except Exception as e:
         print(f"Webhook error: {e}")
