@@ -15,12 +15,13 @@ MY_PORT = 8000
 app = FastAPI()
 
 def download_audio(att_guid):
-    url = f"{BLUEBUBBLES_URL}/api/v1/attachment/{att_guid}"
+    url = f"{BLUEBUBBLES_URL}/api/v1/attachment/{att_guid}/download"
     params = {"password": BLUEBUBBLES_PASSWORD}
     try:
         response = requests.get(url, params=params)
         if response.status_code == 200:
-            return resp.content  # raw audio bytes
+            print("success in download attachment, sample:", response.content[:10])
+            return response.content  # raw audio bytes
         else:
             print(f"Failed to download attachment {att_guid}: {resp.status_code} {resp.text}")
     except Exception as e:
