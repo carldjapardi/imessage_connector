@@ -3,7 +3,7 @@ import uuid
 import requests
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
-from webhook_fastapi import send_message
+from webhook_fastapi import send_message, download_audio
 
 load_dotenv()
 
@@ -22,15 +22,19 @@ async def webhook(request: Request):
             message = data.get("data", {})
             if not message.get("isFromMe"):
                 text = message.get("text")
-                attachment = message.get("attachments")
+                attachment = message.get("attachments", [])
                 if attachment:
                     print(attachment)
-                    att_guid = attachment[0].get("guid")
                     att_type = attachment[0].get("mimeType")
-                    send = f"{att_guid} {att_type}"
-                    chat_guid = message.get("chats", [{}])[0].get("guid")
                     print(f"Received Attachment Type: {att_type}")
-                    send_message(chat_guid, send)
+                    if att_type.startswith("audio/"):
+                        att_guid = attachment[0].get("guid")
+                        if not att_guid: return
+                        audio_file = download_audio(att_guid)
+                        if not audio_file: return
+                        send = f"{att_guid} {att_type}"
+                        chat_guid = message.get("chats", [{}])[0].get("guid")
+                        send_message(chat_guid, send)
                 elif text:
                     chat_guid = message.get("chats", [{}])[0].get("guid")
                     print(f"Received Message: {text}")
