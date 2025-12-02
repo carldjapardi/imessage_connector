@@ -1,7 +1,9 @@
 import os
+import uuid
+import requests
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
-from gpt_response import genereate_response
+from gpt_response import generate_response
 
 load_dotenv()
 
@@ -38,14 +40,14 @@ def send_message(chat_guid, message_text):
 
 
 @app.post("/")
-async def webhook():
+async def webhook(request: Request):
     try:
-        await data = request.get_json()
+        data = await request.json()
         if data.get("type") == "new-message":
             message = data.get("data", {})
             if not message.get("isFromMe"):
                 text = message.get("text")
-                chat_guid = msg.get("chats", [{}])[0].get("guid")
+                chat_guid = message.get("chats", [{}])[0].get("guid")
                 print(f"Received Message: {text}")
 
                 if text:
