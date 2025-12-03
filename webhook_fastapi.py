@@ -1,6 +1,7 @@
 import os
 import uuid
 import requests
+import time
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from gpt_response import generate_response, gpt_stt
@@ -24,8 +25,10 @@ def download_audio(att_guid):
             return response.content  # raw audio bytes
         else:
             print(f"Failed to download attachment {att_guid}: {resp.status_code} {resp.text}")
+            return None
     except Exception as e:
         print(f"Error downloading attachment {att_guid}: {e}")
+        return None
 
 def send_message(chat_guid, message_text):
     """Send message back to BlueBubbles."""
@@ -57,7 +60,13 @@ async def webhook(request: Request):
         if data.get("type") == "new-message":
             message = data.get("data", {})
             if not message.get("isFromMe"):
-                text = message.get("text", [])
+                msg_date = message.get("dateCreated")
+                
+                if msg_date and msg_date < int((time.time() - 60000)):  # 60s ago in ms
+                    print(f"Skipping old message from {msg_date}")
+                    return {"status": "ok"}
+
+                text = message.get("text", "")
                 attachment = message.get("attachments", [])
                 chat_guid = message.get("chats", [{}])[0].get("guid")
                 if text:
