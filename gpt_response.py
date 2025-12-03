@@ -17,7 +17,7 @@ def generate_response(user_query):
     return response.output_text
 
 def gpt_stt(audio_bytes):
-    audio_file = ("recording.mp3", audio_bytes, "audio/mp3")
+    audio_file = ("recording.m4a", audio_bytes, "audio/m4a")
     transcript = openai.audio.transcriptions.create(
         model="gpt-4o-mini-transcribe",
         file=audio_file,
