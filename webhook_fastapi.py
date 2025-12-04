@@ -1,0 +1,94 @@
+import os
+import uuid
+import requests
+import time
+from dotenv import load_dotenv
+from fastapi import FastAPI, Request
+from gpt_response import generate_response, gpt_stt
+
+load_dotenv()
+
+BLUEBUBBLES_URL = "http://localhost:1234"
+BLUEBUBBLES_PASSWORD = os.getenv("SERVER_PASSWORD")
+
+MY_PORT = 8000
+
+app = FastAPI()
+
+def download_audio(att_guid):
+    url = f"{BLUEBUBBLES_URL}/api/v1/attachment/{att_guid}/download"
+    params = {"password": BLUEBUBBLES_PASSWORD}
+    try:
+        response = requests.get(url, params=params)
+        if response.status_code == 200:
+            print("success in download attachment, sample:", response.content[:10])
+            return response.content  # raw audio bytes
+        else:
+            print(f"Failed to download attachment {att_guid}: {resp.status_code} {resp.text}")
+            return None
+    except Exception as e:
+        print(f"Error downloading attachment {att_guid}: {e}")
+        return None
+
+def send_message(chat_guid, message_text):
+    """Send message back to BlueBubbles."""
+    url = f"{BLUEBUBBLES_URL}/api/v1/message/text"
+
+    payload = {
+        "chatGuid": chat_guid,
+        "tempGuid": str(uuid.uuid4()),
+        "message": message_text,
+        "method": "apple-script",
+        }
+
+    params = {"password": BLUEBUBBLES_PASSWORD}
+
+    try:
+        response = requests.post(url, json=payload, params=params)
+        if response.status_code == 200:
+            print(f"Successfully sent: {message_text}")
+        else:
+            print(f"Failed to send: {response.text}")
+    except Exception as e:
+        print(f"Error sending message: {e}")
+
+
+@app.post("/")
+async def webhook(request: Request):
+    try:
+        data = await request.json()
+        if data.get("type") == "new-message":
+            message = data.get("data", {})
+            if not message.get("isFromMe"):
+                msg_date = message.get("dateCreated")
+                
+                if msg_date and msg_date < int((time.time() - 60000)):  # 60s ago in ms
+                    print(f"Skipping old message from {msg_date}")
+                    return {"status": "ok"}
+
+                text = message.get("text", "")
+                attachment = message.get("attachments", [])
+                chat_guid = message.get("chats", [{}])[0].get("guid")
+                if text:
+                    print(f"Received Message: {text}")
+                    gpt_response = generate_response(text)
+                    send_message(chat_guid, gpt_response)
+                if attachment:
+                    att_type = attachment[0].get("mimeType")
+                    att_guid = attachment[0].get("guid")
+                    if not att_type.startswith("audio/"): return
+                    audio_bytes = download_audio(att_guid)
+                    print(f"Received Attachment: {att_type}")
+                    transcribe = gpt_stt(audio_bytes)
+                    gpt_response = generate_response(transcribe)
+                    send_response = f"Transcribed audio: {transcribe}, Response: {gpt_response}"
+                    send_message(chat_guid, send_response)
+        return {"status": "ok"} 
+    except Exception as e:
+        print(f"Webhook error: {e}")
+        return {"status": "error", "detail": str(e)}
+
+if __name__ == "__main__":
+    import uvicorn
+    print(f"Starting FastAPI bot on IPv6 port {MY_PORT}...")
+    uvicorn.run("webhook_fastapi:app", host="::", port=MY_PORT, reload=True)
